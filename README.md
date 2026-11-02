@@ -65,8 +65,21 @@ Prettier uses the editor settings in `.editorconfig` and preserves existing
 Markdown line wrapping. It skips files covered by `.gitignore` and the
 generated npm lockfile listed in `.prettierignore`.
 
-Build, lint, and test commands are not configured yet. These will be added
-with the relevant tooling and the first source package.
+Check JavaScript and TypeScript for code issues:
+
+```sh
+npm run lint
+```
+
+ESLint uses the recommended JavaScript and TypeScript rules, including checks
+for unused variables and explicit `any`. Warnings fail the command. Generated
+build and coverage folders are excluded. Prettier handles formatting.
+
+TypeScript is pinned to 6.0.3 to stay within the lint integration's supported
+version range. No application source packages exist yet, so lint currently
+checks the ESLint configuration itself.
+
+Build and test commands will be added with the first source package.
 
 Keep secrets in ignored `.env` files. Only `.env.example` files containing
 safe example values belong in version control.
