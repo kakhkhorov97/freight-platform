@@ -1,6 +1,6 @@
 # Uzbekistan freight matching prototype
 
-A graduate thesis prototype at Suncheon National University exploring how
+A graduate thesis prototype exploring how
 matching return-trip trucks with cargo could reduce empty road freight trips
 in Uzbekistan. The first planned corridor is Tashkent ↔ Samarkand.
 
