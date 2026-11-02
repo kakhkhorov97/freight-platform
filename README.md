@@ -54,8 +54,19 @@ There are no application packages yet.
 package will extend it and choose its own module and runtime settings.
 Unchecked indexed access and optional properties receive additional checks.
 
-Build, lint, format-check, and test commands are not configured yet. These
-will be added with the relevant tooling and the first source package.
+Format supported project files or check their formatting:
+
+```sh
+npm run format
+npm run format:check
+```
+
+Prettier uses the editor settings in `.editorconfig` and preserves existing
+Markdown line wrapping. It skips files covered by `.gitignore` and the
+generated npm lockfile listed in `.prettierignore`.
+
+Build, lint, and test commands are not configured yet. These will be added
+with the relevant tooling and the first source package.
 
 Keep secrets in ignored `.env` files. Only `.env.example` files containing
 safe example values belong in version control.

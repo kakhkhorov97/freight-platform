@@ -9,6 +9,11 @@
     "packages/*"
   ],
   "devDependencies": {
+    "prettier": "3.9.10",
     "typescript": "7.0.2"
+  },
+  "scripts": {
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   }
 }

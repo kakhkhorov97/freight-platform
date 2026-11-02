@@ -1,0 +1,2 @@
+# npm manages the generated dependency lockfile.
+package-lock.json
