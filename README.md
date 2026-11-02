@@ -40,8 +40,22 @@ Folders will be added only when their implementation step needs them.
 
 ## Development
 
-Tooling and setup commands will be added in subsequent steps. Build, lint,
-format-check, and test commands are not configured yet.
+Install the pinned development dependencies from the project root:
+
+```sh
+npm ci
+```
+
+The root package is private to prevent accidental npm publication. npm
+workspaces will discover packages under `apps/*` and `packages/*` once added.
+There are no application packages yet.
+
+`tsconfig.base.json` provides shared strict TypeScript settings. Each future
+package will extend it and choose its own module and runtime settings.
+Unchecked indexed access and optional properties receive additional checks.
+
+Build, lint, format-check, and test commands are not configured yet. These
+will be added with the relevant tooling and the first source package.
 
 Keep secrets in ignored `.env` files. Only `.env.example` files containing
 safe example values belong in version control.
@@ -50,4 +64,4 @@ Store database timestamps in UTC. The UI will display Asia/Tashkent time.
 
 ## License
 
-The owner has not selected a license yet.
+Licensed under the [MIT License](LICENSE).
