@@ -109,7 +109,7 @@ The root `.env` supplies `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`,
 database name, and user default to `127.0.0.1`, `5432`, `freight`, and `freight`.
 Use your configured host port, such as `5433` if `5432` is occupied.
 The API sets database sessions to UTC and disables automatic schema changes,
-migration execution, and extension installation. No entities exist yet.
+migration execution, and extension installation. The first entity is `User`.
 Connection failures stop startup after one attempt with a five-second
 connection timeout. Configuration and controller tests do not require Docker.
 
@@ -150,7 +150,21 @@ npm run migration:create -- src/database/migrations/DescriptiveName
 
 The path is relative to `apps/api`. This creates a timestamped TypeScript file;
 implement and review its `up` and `down` methods before running it. There are
-no application migrations yet. Applied migrations must never be edited.
+a `CreateUsers` migration. Applied migrations must never be edited.
+
+## User schema
+
+The `users` table contains a generated UUID, `displayName` up to 100 characters,
+a required `driver`/`shipper`/`admin` role, and UTC-aware `createdAt`/`updatedAt`
+timestamps. Empty and space-only names are rejected. TypeORM updates `updatedAt`
+when updating through its repository; direct SQL updates must set it explicitly.
+There is no User API endpoint yet.
+
+Run `npm run migration:run` to apply the approved migration to your configured
+database. Run `npm run test:database` with PostgreSQL running to test persistence,
+constraints, schema agreement, and rollback in a temporary database. The configured
+database user needs permission to create databases. Tests delete that database
+afterward. `npm test` remains independent of PostgreSQL.
 
 ## Local data services
 

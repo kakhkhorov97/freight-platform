@@ -25,7 +25,8 @@
     "migration:create": "npm run migration:create --workspace @freight/api --",
     "migration:show": "npm run migration:show --workspace @freight/api --",
     "migration:run": "npm run migration:run --workspace @freight/api --",
-    "migration:revert": "npm run migration:revert --workspace @freight/api --"
+    "migration:revert": "npm run migration:revert --workspace @freight/api --",
+    "test:database": "npm run test:database --workspace @freight/api"
   },
   "engines": {
     "node": ">=24.9.0 <25"
