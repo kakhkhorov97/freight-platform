@@ -100,8 +100,18 @@ npm run start:api
 ```
 
 Open `http://127.0.0.1:3000/health` to receive `{"status":"ok"}`. This endpoint
-checks API liveness only. It does not check PostgreSQL or Redis. The API does
-not connect to those services yet. Stop it with Ctrl+C.
+checks API liveness only. Startup requires a successful PostgreSQL connection;
+it does not connect to Redis yet. Stop it with Ctrl+C to close the connection.
+
+Start PostgreSQL with `docker compose up -d --wait postgres` before the API.
+The root `.env` supplies `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`,
+`POSTGRES_USER`, and the required non-empty `POSTGRES_PASSWORD`. Host, port,
+database name, and user default to `127.0.0.1`, `5432`, `freight`, and `freight`.
+Use your configured host port, such as `5433` if `5432` is occupied.
+The API sets database sessions to UTC and disables automatic schema changes,
+migration execution, and extension installation. No entities exist yet.
+Connection failures stop startup after one attempt with a five-second
+connection timeout. Configuration and controller tests do not require Docker.
 
 Set `API_HOST` and `API_PORT` in the root `.env` file to change the listener.
 They default to `127.0.0.1` and `3000`. `API_HOST` accepts IPv4 or IPv6

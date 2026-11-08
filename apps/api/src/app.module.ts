@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { validateEnvironment } from "./config/environment";
+import { DatabaseModule } from "./database/database.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -11,6 +12,7 @@ import { HealthController } from "./health/health.controller";
       envFilePath: resolve(__dirname, "../../../.env"),
       validate: validateEnvironment,
     }),
+    DatabaseModule,
   ],
   controllers: [HealthController],
 })

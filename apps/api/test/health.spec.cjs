@@ -1,13 +1,18 @@
 require("reflect-metadata");
 const { beforeAll, afterAll, test, expect } = require("@jest/globals");
 const { NestFactory } = require("@nestjs/core");
-const { AppModule } = require("../dist/app.module");
+const { Module } = require("@nestjs/common");
+const { HealthController } = require("../dist/health/health.controller");
+
+// Controller HTTP tests run independently of database availability.
+class HealthTestModule {}
+Module({ controllers: [HealthController] })(HealthTestModule);
 
 let app;
 let baseUrl;
 
 beforeAll(async () => {
-  app = await NestFactory.create(AppModule, { logger: false });
+  app = await NestFactory.create(HealthTestModule, { logger: false });
   await app.listen(0, "127.0.0.1");
   baseUrl = await app.getUrl();
 });
