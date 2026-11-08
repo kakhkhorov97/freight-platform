@@ -40,11 +40,17 @@ Folders will be added only when their implementation step needs them.
 
 ## Development
 
-Install the pinned development dependencies from the project root:
+Use Node.js 24.9 or newer within the 24.x line. With nvm, install and select
+the exact version pinned in `.nvmrc`, then install dependencies from the root:
 
 ```sh
+nvm install
+nvm use
 npm ci
 ```
+
+The API uses NestJS 12.4.0, whose platform adapter includes the fixed Multer
+2.5.0 dependency. No dependency override is needed.
 
 The root package is private to prevent accidental npm publication. npm
 workspaces will discover packages under `apps/*` and `packages/*` once added.
@@ -85,7 +91,7 @@ Store database timestamps in UTC. The UI will display Asia/Tashkent time.
 
 ## API
 
-With Node.js 20.19 or newer, install dependencies and run from the project root:
+After selecting Node.js 24 with `nvm use`, run from the project root:
 
 ```sh
 npm ci
@@ -98,7 +104,8 @@ checks API liveness only. It does not check PostgreSQL or Redis. The API does
 not connect to those services yet. Stop it with Ctrl+C.
 
 Run `npm test` for the HTTP health and unknown-route tests. Tests compile the
-API first and use a temporary local port. Run `npm run lint` and
+API first and use a temporary local port. The test command enables Node's VM
+modules support so Jest can load NestJS 12's ES modules. Run `npm run lint` and
 `npm run format:check` for code and formatting checks.
 
 ## Local data services
