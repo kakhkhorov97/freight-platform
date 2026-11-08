@@ -124,6 +124,34 @@ API first and use a temporary local port. The test command enables Node's VM
 modules support so Jest can load NestJS 12's ES modules. Run `npm run lint` and
 `npm run format:check` for code and formatting checks.
 
+## Database migrations
+
+The API and migration CLI share validated database options. The CLI loads the
+root `.env`; shell environment settings take precedence. Migration commands
+use compiled JavaScript and build the API before connecting.
+
+From the project root:
+
+```sh
+npm run migration:show
+npm run migration:run
+npm run migration:revert
+```
+
+`show` lists migration status, `run` applies pending migrations, and `revert`
+undoes the most recently applied migration. TypeORM initializes its migration
+history table on first use, including when showing status.
+
+To create a migration in a future implementation step:
+
+```sh
+npm run migration:create -- src/database/migrations/DescriptiveName
+```
+
+The path is relative to `apps/api`. This creates a timestamped TypeScript file;
+implement and review its `up` and `down` methods before running it. There are
+no application migrations yet. Applied migrations must never be edited.
+
 ## Local data services
 
 Install and start [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/)

@@ -7,7 +7,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
-    "test": "npm run build && node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand"
+    "test": "npm run build && node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand",
+    "migration:create": "typeorm migration:create",
+    "migration:show": "npm run build && typeorm migration:show -d dist/database/data-source.js",
+    "migration:run": "npm run build && typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "npm run build && typeorm migration:revert -d dist/database/data-source.js"
   },
   "dependencies": {
     "@nestjs/common": "12.4.0",

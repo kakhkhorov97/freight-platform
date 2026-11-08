@@ -1,5 +1,6 @@
 import { isIP } from "node:net";
-import type { TypeOrmModuleOptions } from "@nestjs/typeorm";
+import { resolve } from "node:path";
+import type { DataSourceOptions } from "typeorm";
 
 function requiredText(value: unknown, key: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -10,7 +11,7 @@ function requiredText(value: unknown, key: string): string {
 
 export function createDatabaseOptions(
   input: Record<string, unknown>,
-): TypeOrmModuleOptions {
+): DataSourceOptions {
   const host = requiredText(
     input.POSTGRES_HOST ?? "127.0.0.1",
     "POSTGRES_HOST",
@@ -42,8 +43,8 @@ export function createDatabaseOptions(
     migrationsRun: false,
     installExtensions: false,
     entities: [],
+    migrations: [resolve(__dirname, "migrations/*.js")],
     connectTimeoutMS: 5000,
-    retryAttempts: 1,
     extra: { options: "-c timezone=UTC" },
   };
 }

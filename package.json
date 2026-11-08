@@ -21,7 +21,11 @@
     "lint": "eslint . --max-warnings 0",
     "build": "npm run build --workspace @freight/api",
     "start:api": "npm run start --workspace @freight/api",
-    "test": "npm run test --workspace @freight/api"
+    "test": "npm run test --workspace @freight/api",
+    "migration:create": "npm run migration:create --workspace @freight/api --",
+    "migration:show": "npm run migration:show --workspace @freight/api --",
+    "migration:run": "npm run migration:run --workspace @freight/api --",
+    "migration:revert": "npm run migration:revert --workspace @freight/api --"
   },
   "engines": {
     "node": ">=24.9.0 <25"
