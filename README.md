@@ -103,6 +103,12 @@ Open `http://127.0.0.1:3000/health` to receive `{"status":"ok"}`. This endpoint
 checks API liveness only. It does not check PostgreSQL or Redis. The API does
 not connect to those services yet. Stop it with Ctrl+C.
 
+Set `API_HOST` and `API_PORT` in the root `.env` file to change the listener.
+They default to `127.0.0.1` and `3000`. `API_HOST` accepts IPv4 or IPv6
+addresses; `API_PORT` accepts whole numbers from 1 to 65535. Invalid values
+stop startup. Shell environment values take precedence over `.env`.
+The root file is loaded even when starting through the npm workspace.
+
 Run `npm test` for the HTTP health and unknown-route tests. Tests compile the
 API first and use a temporary local port. The test command enables Node's VM
 modules support so Jest can load NestJS 12's ES modules. Run `npm run lint` and
