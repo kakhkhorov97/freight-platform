@@ -109,7 +109,7 @@ The root `.env` supplies `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`,
 database name, and user default to `127.0.0.1`, `5432`, `freight`, and `freight`.
 Use your configured host port, such as `5433` if `5432` is occupied.
 The API sets database sessions to UTC and disables automatic schema changes,
-migration execution, and extension installation. The first entity is `User`.
+migration execution, and extension installation. The database stores users, trucks, trips, and loads.
 Connection failures stop startup after one attempt with a five-second
 connection timeout. Configuration and controller tests do not require Docker.
 
@@ -150,7 +150,7 @@ npm run migration:create -- src/database/migrations/DescriptiveName
 
 The path is relative to `apps/api`. This creates a timestamped TypeScript file;
 implement and review its `up` and `down` methods before running it. The schema migrations
-create the users and trucks tables. Keep applied migrations immutable.
+create the users, trucks, trips, loads, and matches tables. Keep applied migrations immutable.
 
 ## User schema
 
@@ -158,7 +158,6 @@ The `users` table contains a generated UUID, `displayName` up to 100 characters,
 a required `driver`/`shipper`/`admin` role, and UTC-aware `createdAt`/`updatedAt`
 timestamps. Empty and space-only names are rejected. TypeORM updates `updatedAt`
 when updating through its repository; direct SQL updates must set it explicitly.
-There is no User API endpoint yet.
 
 Run `npm run migration:run` to apply the approved migration to your configured
 database. Run `npm run test:database` with PostgreSQL running to test persistence,
@@ -172,6 +171,39 @@ A truck references a user and stores a unique uppercase plate without whitespace
 a positive integer capacity in kilograms, and UTC timestamps. The database rejects
 deletion of a user with registered trucks. The truck registration API will check
 the driver's role.
+
+## Trip and Load schemas
+
+A trip references a truck and records its origin, destination, departure time,
+and latest arrival time. A load references a shipper and records its pickup and
+delivery points, pickup window, and positive weight in whole kilograms.
+
+Locations are PostGIS geography points with SRID 4326. GeoJSON coordinates use
+longitude first, then latitude. The migrations require PostGIS, which the local
+Compose database provides. Trip and pickup windows must end after they start.
+The database checks that the shipper exists. The future Load API will check the
+shipper's role.
+
+## Matches and User queries
+
+A match links one trip and one load. Each pair is unique. The driver and shipper
+confirm separately. The match is final when both confirmation timestamps exist.
+
+Send GraphQL requests to `POST /graphql` on the local API. The `users` query
+accepts `limit` (1–100, default 20) and `offset` (default 0), ordered by UUID.
+The `user(id: ID!)` query validates the UUID and returns null if it is missing.
+These queries expose display names, roles, and timestamps. Apply the migrations
+before querying. Keep the API local while authentication is pending.
+
+```graphql
+query {
+  users(limit: 10) {
+    id
+    displayName
+    role
+  }
+}
+```
 
 ## Local data services
 
