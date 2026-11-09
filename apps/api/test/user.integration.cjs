@@ -4,6 +4,7 @@ const { randomUUID } = require("node:crypto");
 const { Client } = require("pg");
 const { DataSource } = require("typeorm");
 const { User, UserRole } = require("../dist/users/user.entity");
+const { Truck } = require("../dist/trucks/truck.entity");
 const base = require("../dist/database/data-source").default.options;
 const database = `freight_user_test_${randomUUID().replaceAll("-", "")}`;
 let admin;
@@ -76,7 +77,47 @@ test("entity metadata agrees with the migrated schema", async () => {
   expect(changes.upQueries).toEqual([]);
 });
 
-test("migration rolls back and reapplies cleanly", async () => {
+test("truck constraints protect plates, capacity, and the driver reference", async () => {
+  const users = source.getRepository(User);
+  const driver = await users.save({
+    displayName: "Truck test driver",
+    role: UserRole.Driver,
+  });
+  const trucks = source.getRepository(Truck);
+  const truck = {
+    driverId: driver.id,
+    plateNumber: "01A123BC",
+    capacityKg: 1000,
+  };
+  const saved = await trucks.save({ ...truck });
+  expect(saved.id).toEqual(expect.any(String));
+  await expect(trucks.insert(truck)).rejects.toMatchObject({
+    driverError: { code: "23505" },
+  });
+  await expect(
+    trucks.insert({ ...truck, plateNumber: "01a 123" }),
+  ).rejects.toMatchObject({ driverError: { code: "23514" } });
+  await expect(
+    trucks.insert({ ...truck, plateNumber: "01B123BC", capacityKg: 0 }),
+  ).rejects.toMatchObject({ driverError: { code: "23514" } });
+  await expect(
+    trucks.insert({
+      ...truck,
+      plateNumber: "01B123BC",
+      driverId: randomUUID(),
+    }),
+  ).rejects.toMatchObject({ driverError: { code: "23503" } });
+  await expect(users.delete(driver.id)).rejects.toMatchObject({
+    driverError: { code: "23001" },
+  });
+});
+
+test("migrations roll back and reapply cleanly", async () => {
+  await source.undoLastMigration();
+  const [truckTable] = await source.query(
+    "SELECT to_regclass('public.trucks') AS trucks",
+  );
+  expect(truckTable.trucks).toBeNull();
   await source.undoLastMigration();
   const [tables] = await source.query(
     "SELECT to_regclass('public.users') AS users, to_regtype('public.user_role') AS role",

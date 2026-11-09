@@ -149,8 +149,8 @@ npm run migration:create -- src/database/migrations/DescriptiveName
 ```
 
 The path is relative to `apps/api`. This creates a timestamped TypeScript file;
-implement and review its `up` and `down` methods before running it. There are
-a `CreateUsers` migration. Applied migrations must never be edited.
+implement and review its `up` and `down` methods before running it. The schema migrations
+create the users and trucks tables. Keep applied migrations immutable.
 
 ## User schema
 
@@ -165,6 +165,13 @@ database. Run `npm run test:database` with PostgreSQL running to test persistenc
 constraints, schema agreement, and rollback in a temporary database. The configured
 database user needs permission to create databases. Tests delete that database
 afterward. `npm test` remains independent of PostgreSQL.
+
+## Truck schema
+
+A truck references a user and stores a unique uppercase plate without whitespace,
+a positive integer capacity in kilograms, and UTC timestamps. The database rejects
+deletion of a user with registered trucks. The truck registration API will check
+the driver's role.
 
 ## Local data services
 
