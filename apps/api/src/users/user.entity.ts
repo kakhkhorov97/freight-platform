@@ -5,6 +5,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Unique,
 } from "typeorm";
 
 export enum UserRole {
@@ -14,6 +15,11 @@ export enum UserRole {
 }
 
 @Entity("users")
+@Unique("UQ_users_email", ["email"])
+@Check(
+  "CHK_users_credentials_pair",
+  '("email" IS NULL) = ("password_hash" IS NULL)',
+)
 @Check("CHK_users_display_name_nonempty", 'length(trim("display_name")) > 0')
 export class User {
   @PrimaryGeneratedColumn("uuid", { primaryKeyConstraintName: "PK_users_id" })
@@ -24,6 +30,17 @@ export class User {
 
   @Column({ type: "enum", enum: UserRole, enumName: "user_role" })
   role!: UserRole;
+
+  @Column({ type: "varchar", length: 254, nullable: true, select: false })
+  email!: string | null;
+
+  @Column({
+    name: "password_hash",
+    type: "text",
+    nullable: true,
+    select: false,
+  })
+  passwordHash!: string | null;
 
   @CreateDateColumn({
     name: "created_at",

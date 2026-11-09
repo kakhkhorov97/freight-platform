@@ -13,13 +13,22 @@ export class TripsService {
     @InjectRepository(Trip) private readonly repository: Repository<Trip>,
   ) {}
 
-  async create(truckId: string, input: CreateTripInput): Promise<Trip> {
+  async create(
+    truckId: string,
+    driverId: string,
+    input: CreateTripInput,
+  ): Promise<Trip> {
     const { start, end } = parseTimeWindow(
       input.departureAt,
       input.latestArrivalAt,
     );
-    if (!(await this.repository.manager.existsBy(Truck, { id: truckId }))) {
-      throw new BadRequestException("truckId must refer to an existing truck");
+    if (
+      !(await this.repository.manager.existsBy(Truck, {
+        id: truckId,
+        driverId,
+      }))
+    ) {
+      throw new BadRequestException("truckId must refer to one of your trucks");
     }
     return this.repository.save(
       this.repository.create({

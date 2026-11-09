@@ -1,5 +1,8 @@
 import { ParseUUIDPipe } from "@nestjs/common";
 import { Args, ID, Int, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { CurrentUser, requireRole } from "../auth/auth.context";
+import type { Principal } from "../auth/auth.service";
+import { UserRole } from "../users/user.entity";
 import { PaginationArgs, validatePagination } from "../graphql/pagination.args";
 import { TruckModel } from "./truck.model";
 import { TrucksService } from "./trucks.service";
@@ -10,23 +13,28 @@ export class TrucksResolver {
 
   @Mutation(() => TruckModel)
   createTruck(
-    @Args("driverId", { type: () => ID }, ParseUUIDPipe) driverId: string,
+    @CurrentUser() principal: Principal,
     @Args("plateNumber", { type: () => String }) plateNumber: string,
     @Args("capacityKg", { type: () => Int }) capacityKg: number,
   ): Promise<TruckModel> {
-    return this.service.create(driverId, plateNumber, capacityKg);
+    requireRole(principal, UserRole.Driver);
+    return this.service.create(principal.id, plateNumber, capacityKg);
   }
 
   @Query(() => [TruckModel])
-  trucks(@Args() page: PaginationArgs): Promise<TruckModel[]> {
+  trucks(
+    @Args() page: PaginationArgs,
+    @CurrentUser() principal: Principal,
+  ): Promise<TruckModel[]> {
     validatePagination(page);
-    return this.service.list(page.limit, page.offset);
+    return this.service.list(page.limit, page.offset, principal);
   }
 
   @Query(() => TruckModel, { nullable: true })
   truck(
     @Args("id", { type: () => ID }, ParseUUIDPipe) id: string,
+    @CurrentUser() principal: Principal,
   ): Promise<TruckModel | null> {
-    return this.service.findById(id);
+    return this.service.findById(id, principal);
   }
 }

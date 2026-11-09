@@ -150,7 +150,7 @@ npm run migration:create -- src/database/migrations/DescriptiveName
 
 The path is relative to `apps/api`. This creates a timestamped TypeScript file;
 implement and review its `up` and `down` methods before running it. The schema migrations
-create the users, trucks, trips, loads, and matches tables. Keep applied migrations immutable.
+create the users, trucks, trips, loads, matches, and session tables. Keep applied migrations immutable.
 
 ## User schema
 
@@ -188,43 +188,55 @@ The Load creation mutation checks the shipper's role.
 A match links one trip and one load. Each pair is unique. The driver and shipper
 confirm separately. The match is final when both confirmation timestamps exist.
 
-Send GraphQL requests to `POST /graphql` on the local API. The `users` query
-accepts `limit` (1–100, default 20) and `offset` (default 0), ordered by UUID.
-The `user(id: ID!)` query validates the UUID and returns null if it is missing.
-The `trucks`, `trips`, `loads`, and `matches` queries use the same pagination.
-The `truck`, `trip`, `load`, and `match` queries take a UUID and return null
-for missing records. Trip and Load points expose `coordinates` in longitude,
-latitude order. Match queries expose both confirmation timestamps and `isFinal`.
+Send GraphQL requests to `POST /graphql` on the local API. Apply migrations
+before using authentication. Call `register(email, password, displayName, role)`
+with `Driver` or `Shipper`, then call `login(email, password) { token expiresAt }`.
+Pass the token as `Authorization: Bearer <token>` and call `logout` to revoke
+the current session. Passwords are hashed with scrypt. Sessions expire after
+24 hours, and the database stores token hashes. The local API allows ten
+registration or login attempts per IP address per minute, per process.
 
-The `createUser(displayName: String!, role: UserRole!)` mutation trims the
-display name and accepts `Driver` and `Shipper`. Apply the migrations before
-using GraphQL. Keep the API local while authentication is pending.
+Existing user rows retain their records and need explicit credential setup.
+Administrators can list users and inspect any profile. Other users can read
+their own profile. Truck reads are scoped to the owner or an administrator.
+Trip and Load reads are available to authenticated users. Match reads are scoped
+to the assigned driver, shipper, or an administrator.
 
-```graphql
-query {
-  users(limit: 10) {
-    id
-    displayName
-    role
-  }
-}
-```
+List queries accept `limit` (1–100, default 20) and `offset` (default 0), ordered
+by UUID. Trip and Load point coordinates use longitude, latitude order.
 
 ### Create trucks, trips, and loads
 
 Use these mutations on the local GraphQL endpoint:
 
-- `createTruck(driverId: ID!, plateNumber: String!, capacityKg: Int!)` requires
-  a driver. It removes plate whitespace, uppercases the result, and accepts
+- `createTruck(plateNumber: String!, capacityKg: Int!)` assigns the truck to
+  the signed-in driver. It removes plate whitespace, uppercases the result, and accepts
   plates up to 32 characters.
-- `createTrip(truckId: ID!, input: CreateTripInput!)` requires an existing truck.
+- `createTrip(truckId: ID!, input: CreateTripInput!)` requires one of the signed-in driver's trucks.
   The input contains `origin`, `destination`, `departureAt`, and `latestArrivalAt`.
-- `createLoad(shipperId: ID!, input: CreateLoadInput!)` requires a shipper.
+- `createLoad(input: CreateLoadInput!)` assigns the load to the signed-in shipper.
   The input contains `pickup`, `delivery`, `pickupWindowStart`,
   `pickupWindowEnd`, and `weightKg`.
 
 Location inputs take `longitude` and `latitude` as separate numbers. Send times
 as ISO 8601 timestamps with a timezone. Capacity and weight use whole kilograms.
+
+## Matching core
+
+The pure TypeScript matcher accepts candidate trip and load pairs with route
+estimates supplied by the caller. Capacity and weight use whole kilograms.
+Timestamps use epoch milliseconds. Pickup must fall within the load window and
+follow truck departure. Final truck arrival must meet the trip deadline.
+Capacity and detour limits include equality.
+
+Filter pairs with `filterFeasiblePairs`, then score each feasible pair with
+`calculatePairCost`. Its four weighted terms are detour in kilometres, delay
+in minutes, absolute price gap in Uzbek soum, and `1 - reliability`. Reliability
+ranges from 0 to 1. A zero weight disables that term. The matcher accepts
+explicit inputs for these values and performs no routing or database calls.
+
+Run `npm test --workspace @freight/matcher` for the isolated tests. The root
+build and test commands also cover the matcher workspace.
 
 ## Local data services
 

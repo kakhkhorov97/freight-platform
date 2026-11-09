@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { QueryFailedError, Repository } from "typeorm";
+import type { Principal } from "../auth/auth.service";
 import { validatePositiveKg } from "../graphql/creation-validation";
 import { User, UserRole } from "../users/user.entity";
 import { Truck } from "./truck.entity";
@@ -54,15 +55,21 @@ export class TrucksService {
     }
   }
 
-  list(limit: number, offset: number): Promise<Truck[]> {
+  list(limit: number, offset: number, principal: Principal): Promise<Truck[]> {
     return this.repository.find({
+      where:
+        principal.role === UserRole.Admin ? {} : { driverId: principal.id },
       take: limit,
       skip: offset,
       order: { id: "ASC" },
     });
   }
 
-  findById(id: string): Promise<Truck | null> {
-    return this.repository.findOneBy({ id });
+  findById(id: string, principal: Principal): Promise<Truck | null> {
+    return this.repository.findOneBy(
+      principal.role === UserRole.Admin
+        ? { id }
+        : { id, driverId: principal.id },
+    );
   }
 }

@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 import { resolve } from "node:path";
 import type { DataSourceOptions } from "typeorm";
+import { AuthSession } from "../auth/session.entity";
 import { Load } from "../loads/load.entity";
 import { Match } from "../matches/match.entity";
 import { Trip } from "../trips/trip.entity";
@@ -47,7 +48,7 @@ export function createDatabaseOptions(
     dropSchema: false,
     migrationsRun: false,
     installExtensions: false,
-    entities: [User, Truck, Trip, Load, Match],
+    entities: [User, Truck, Trip, Load, Match, AuthSession],
     // PostgreSQL provides gen_random_uuid() without installing an extension.
     uuidExtension: "pgcrypto",
     migrations: [resolve(__dirname, "migrations/*.js")],

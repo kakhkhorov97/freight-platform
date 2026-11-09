@@ -1,5 +1,8 @@
 import { ParseUUIDPipe } from "@nestjs/common";
 import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { CurrentUser, requireRole } from "../auth/auth.context";
+import type { Principal } from "../auth/auth.service";
+import { UserRole } from "../users/user.entity";
 import { PaginationArgs, validatePagination } from "../graphql/pagination.args";
 import { CreateTripInput } from "./create-trip.input";
 import { TripModel } from "./trip.model";
@@ -13,8 +16,10 @@ export class TripsResolver {
   createTrip(
     @Args("truckId", { type: () => ID }, ParseUUIDPipe) truckId: string,
     @Args("input") input: CreateTripInput,
+    @CurrentUser() principal: Principal,
   ): Promise<TripModel> {
-    return this.service.create(truckId, input);
+    requireRole(principal, UserRole.Driver);
+    return this.service.create(truckId, principal.id, input);
   }
 
   @Query(() => [TripModel])

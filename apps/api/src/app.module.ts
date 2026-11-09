@@ -4,6 +4,7 @@ import type { ApolloDriverConfig } from "@nestjs/apollo";
 import { GraphQLModule } from "@nestjs/graphql";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { AuthModule } from "./auth/auth.module";
 import { validateEnvironment } from "./config/environment";
 import { DatabaseModule } from "./database/database.module";
 import { HealthController } from "./health/health.controller";
@@ -27,6 +28,7 @@ import { UsersModule } from "./users/users.module";
       graphiql: false,
       includeStacktraceInErrorResponses: false,
     }),
+    AuthModule,
     UsersModule,
     TrucksModule,
     TripsModule,

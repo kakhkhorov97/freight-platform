@@ -1,5 +1,8 @@
 import { ParseUUIDPipe } from "@nestjs/common";
 import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { CurrentUser, requireRole } from "../auth/auth.context";
+import type { Principal } from "../auth/auth.service";
+import { UserRole } from "../users/user.entity";
 import { PaginationArgs, validatePagination } from "../graphql/pagination.args";
 import { CreateLoadInput } from "./create-load.input";
 import { LoadModel } from "./load.model";
@@ -11,10 +14,11 @@ export class LoadsResolver {
 
   @Mutation(() => LoadModel)
   createLoad(
-    @Args("shipperId", { type: () => ID }, ParseUUIDPipe) shipperId: string,
+    @CurrentUser() principal: Principal,
     @Args("input") input: CreateLoadInput,
   ): Promise<LoadModel> {
-    return this.service.create(shipperId, input);
+    requireRole(principal, UserRole.Shipper);
+    return this.service.create(principal.id, input);
   }
 
   @Query(() => [LoadModel])
