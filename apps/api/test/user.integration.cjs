@@ -196,7 +196,7 @@ test("trip and load points round-trip and their windows and weight are enforced"
   });
 });
 
-test("GraphQL reads users and rejects invalid query arguments", async () => {
+test("GraphQL creates users, trucks, trips, and loads and validates their inputs", async () => {
   const repository = source.getRepository(User);
   const user = await repository.save({
     displayName: "GraphQL test user",
@@ -242,6 +242,173 @@ test("GraphQL reads users and rejects invalid query arguments", async () => {
     expect(second.data.users).toHaveLength(1);
     expect(first.data.users[0].id).not.toBe(second.data.users[0].id);
     expect((await query("{ users(limit: 101) { id } }")).errors).toHaveLength(
+      1,
+    );
+    const register =
+      "mutation ($name: String!, $role: UserRole!) { createUser(displayName: $name, role: $role) { id displayName role } }";
+    const registration = await query(register, {
+      name: "  New driver  ",
+      role: "Driver",
+    });
+    const driver = registration.data.createUser;
+    expect(driver).toMatchObject({ displayName: "New driver", role: "Driver" });
+    expect(await repository.findOneByOrFail({ id: driver.id })).toMatchObject({
+      displayName: "New driver",
+      role: UserRole.Driver,
+    });
+    for (const variables of [
+      { name: "Escalation test", role: "Admin" },
+      { name: "  ", role: "Driver" },
+      { name: "x".repeat(101), role: "Shipper" },
+    ]) {
+      expect((await query(register, variables)).errors).toHaveLength(1);
+    }
+
+    const createTruck =
+      'mutation ($id: ID!, $kg: Int!) { createTruck(driverId: $id, plateNumber: " 01d 123bc ", capacityKg: $kg) { id plateNumber capacityKg } }';
+    const truckArgs = { id: driver.id, kg: 2400 };
+    const truck = (await query(createTruck, truckArgs)).data.createTruck;
+    expect(truck).toMatchObject({ plateNumber: "01D123BC", capacityKg: 2400 });
+    expect((await query(createTruck, truckArgs)).errors[0].message).toMatch(
+      /already exists/,
+    );
+    expect(
+      (await query(createTruck, { ...truckArgs, id: user.id })).errors[0]
+        .message,
+    ).toMatch(/refer to a driver/);
+    expect(
+      (await query(createTruck, { ...truckArgs, kg: 0 })).errors[0].message,
+    ).toMatch(/positive integer/);
+
+    const origin = { longitude: 69.24, latitude: 41.31 };
+    const destination = { longitude: 66.96, latitude: 39.65 };
+    const tripInput = {
+      origin,
+      destination,
+      departureAt: "2030-01-01T13:00:00+05:00",
+      latestArrivalAt: "2030-01-01T12:00:00Z",
+    };
+    const createTrip =
+      "mutation ($id: ID!, $input: CreateTripInput!) { createTrip(truckId: $id, input: $input) { id departureAt } }";
+    const tripArgs = { id: truck.id, input: tripInput };
+    const trip = (await query(createTrip, tripArgs)).data.createTrip;
+    expect(trip.departureAt).toBe("2030-01-01T08:00:00.000Z");
+    for (const input of [
+      { ...tripInput, origin: { longitude: 181, latitude: 41 } },
+      { ...tripInput, departureAt: "2030-01-01T08:00:00" },
+      { ...tripInput, departureAt: "2030-02-30T08:00:00Z" },
+      { ...tripInput, latestArrivalAt: "2030-01-01T07:00:00Z" },
+    ]) {
+      expect(
+        (await query(createTrip, { ...tripArgs, input })).errors,
+      ).toHaveLength(1);
+    }
+    expect(
+      (await query(createTrip, { ...tripArgs, id: randomUUID() })).errors[0]
+        .message,
+    ).toMatch(/existing truck/);
+
+    const createLoad =
+      "mutation ($id: ID!, $input: CreateLoadInput!) { createLoad(shipperId: $id, input: $input) { id shipperId weightKg pickup { coordinates } } }";
+    const loadArgs = {
+      id: user.id,
+      input: {
+        pickup: origin,
+        delivery: destination,
+        pickupWindowStart: tripInput.departureAt,
+        pickupWindowEnd: tripInput.latestArrivalAt,
+        weightKg: 500,
+      },
+    };
+    const load = (await query(createLoad, loadArgs)).data.createLoad;
+    expect(load).toMatchObject({
+      shipperId: user.id,
+      weightKg: 500,
+      pickup: { coordinates: [origin.longitude, origin.latitude] },
+    });
+    expect(
+      await source.getRepository(Load).findOneByOrFail({ id: load.id }),
+    ).toMatchObject({ weightKg: 500 });
+    expect(
+      (await query(createLoad, { ...loadArgs, id: driver.id })).errors[0]
+        .message,
+    ).toMatch(/refer to a shipper/);
+    expect(
+      (
+        await query(createLoad, {
+          ...loadArgs,
+          input: { ...loadArgs.input, weightKg: -1 },
+        })
+      ).errors,
+    ).toHaveLength(1);
+    const match = await source.getRepository(Match).save({
+      tripId: trip.id,
+      loadId: load.id,
+    });
+    const details = await query(
+      "query ($load: ID!, $match: ID!) { load(id: $load) { id shipperId weightKg } match(id: $match) { id tripId loadId driverConfirmedAt shipperConfirmedAt isFinal } loads { id } matches { id } }",
+      { load: load.id, match: match.id },
+    );
+    expect(details.data.load).toEqual({
+      id: load.id,
+      shipperId: user.id,
+      weightKg: 500,
+    });
+    expect(details.data.match).toEqual({
+      id: match.id,
+      tripId: trip.id,
+      loadId: load.id,
+      driverConfirmedAt: null,
+      shipperConfirmedAt: null,
+      isFinal: false,
+    });
+    expect(details.data.loads).toContainEqual({ id: load.id });
+    expect(details.data.matches).toContainEqual({ id: match.id });
+
+    const confirmedAt = new Date("2030-01-01T08:00:00Z");
+    await source.getRepository(Match).update(match.id, {
+      driverConfirmedAt: confirmedAt,
+      shipperConfirmedAt: confirmedAt,
+    });
+    expect(
+      await query("query ($id: ID!) { match(id: $id) { isFinal } }", {
+        id: match.id,
+      }),
+    ).toEqual({ data: { match: { isFinal: true } } });
+    expect(
+      await query(
+        "query ($id: ID!) { load(id: $id) { id } match(id: $id) { id } }",
+        { id: randomUUID() },
+      ),
+    ).toEqual({ data: { load: null, match: null } });
+    expect((await query("{ matches(limit: 0) { id } }")).errors).toHaveLength(
+      1,
+    );
+
+    const reads = await query(
+      "query ($truck: ID!, $trip: ID!) { truck(id: $truck) { id driverId plateNumber capacityKg } trip(id: $trip) { id truckId origin { coordinates } destination { coordinates } } trucks { id } trips { id } }",
+      { truck: truck.id, trip: trip.id },
+    );
+    expect(reads.data.truck).toEqual({
+      id: truck.id,
+      driverId: driver.id,
+      plateNumber: truck.plateNumber,
+      capacityKg: truck.capacityKg,
+    });
+    expect(reads.data.trip).toEqual({
+      id: trip.id,
+      truckId: truck.id,
+      origin: { coordinates: [origin.longitude, origin.latitude] },
+      destination: {
+        coordinates: [destination.longitude, destination.latitude],
+      },
+    });
+    expect(reads.data.trucks).toContainEqual({ id: truck.id });
+    expect(reads.data.trips).toContainEqual({ id: trip.id });
+    expect((await query("{ trucks(offset: -1) { id } }")).errors).toHaveLength(
+      1,
+    );
+    expect((await query('{ trip(id: "invalid") { id } }')).errors).toHaveLength(
       1,
     );
   } finally {

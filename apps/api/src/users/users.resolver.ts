@@ -1,5 +1,7 @@
-import { BadRequestException, ParseUUIDPipe } from "@nestjs/common";
-import { Args, ID, Int, Query, Resolver } from "@nestjs/graphql";
+import { ParseUUIDPipe } from "@nestjs/common";
+import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { PaginationArgs, validatePagination } from "../graphql/pagination.args";
+import { UserRole } from "./user.entity";
 import { UserModel } from "./user.model";
 import { UsersService } from "./users.service";
 
@@ -8,16 +10,17 @@ export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
   @Query(() => [UserModel])
-  users(
-    @Args("limit", { type: () => Int, defaultValue: 20 }) limit: number,
-    @Args("offset", { type: () => Int, defaultValue: 0 }) offset: number,
-  ): Promise<UserModel[]> {
-    if (limit < 1 || limit > 100 || offset < 0) {
-      throw new BadRequestException(
-        "limit must be 1–100 and offset must be nonnegative",
-      );
-    }
-    return this.usersService.list(limit, offset);
+  users(@Args() page: PaginationArgs): Promise<UserModel[]> {
+    validatePagination(page);
+    return this.usersService.list(page.limit, page.offset);
+  }
+
+  @Mutation(() => UserModel)
+  createUser(
+    @Args("displayName", { type: () => String }) displayName: string,
+    @Args("role", { type: () => UserRole }) role: UserRole,
+  ): Promise<UserModel> {
+    return this.usersService.create(displayName, role);
   }
 
   @Query(() => UserModel, { nullable: true })

@@ -7,6 +7,10 @@ import { ConfigModule } from "@nestjs/config";
 import { validateEnvironment } from "./config/environment";
 import { DatabaseModule } from "./database/database.module";
 import { HealthController } from "./health/health.controller";
+import { LoadsModule } from "./loads/loads.module";
+import { MatchesModule } from "./matches/matches.module";
+import { TripsModule } from "./trips/trips.module";
+import { TrucksModule } from "./trucks/trucks.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -24,6 +28,10 @@ import { UsersModule } from "./users/users.module";
       includeStacktraceInErrorResponses: false,
     }),
     UsersModule,
+    TrucksModule,
+    TripsModule,
+    LoadsModule,
+    MatchesModule,
   ],
   controllers: [HealthController],
 })

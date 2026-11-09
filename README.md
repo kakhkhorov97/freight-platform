@@ -169,7 +169,7 @@ afterward. `npm test` remains independent of PostgreSQL.
 
 A truck references a user and stores a unique uppercase plate without whitespace,
 a positive integer capacity in kilograms, and UTC timestamps. The database rejects
-deletion of a user with registered trucks. The truck registration API will check
+deletion of a user with registered trucks. The truck creation mutation checks
 the driver's role.
 
 ## Trip and Load schemas
@@ -181,10 +181,9 @@ delivery points, pickup window, and positive weight in whole kilograms.
 Locations are PostGIS geography points with SRID 4326. GeoJSON coordinates use
 longitude first, then latitude. The migrations require PostGIS, which the local
 Compose database provides. Trip and pickup windows must end after they start.
-The database checks that the shipper exists. The future Load API will check the
-shipper's role.
+The Load creation mutation checks the shipper's role.
 
-## Matches and User queries
+## Matches and GraphQL operations
 
 A match links one trip and one load. Each pair is unique. The driver and shipper
 confirm separately. The match is final when both confirmation timestamps exist.
@@ -192,8 +191,14 @@ confirm separately. The match is final when both confirmation timestamps exist.
 Send GraphQL requests to `POST /graphql` on the local API. The `users` query
 accepts `limit` (1–100, default 20) and `offset` (default 0), ordered by UUID.
 The `user(id: ID!)` query validates the UUID and returns null if it is missing.
-These queries expose display names, roles, and timestamps. Apply the migrations
-before querying. Keep the API local while authentication is pending.
+The `trucks`, `trips`, `loads`, and `matches` queries use the same pagination.
+The `truck`, `trip`, `load`, and `match` queries take a UUID and return null
+for missing records. Trip and Load points expose `coordinates` in longitude,
+latitude order. Match queries expose both confirmation timestamps and `isFinal`.
+
+The `createUser(displayName: String!, role: UserRole!)` mutation trims the
+display name and accepts `Driver` and `Shipper`. Apply the migrations before
+using GraphQL. Keep the API local while authentication is pending.
 
 ```graphql
 query {
@@ -204,6 +209,22 @@ query {
   }
 }
 ```
+
+### Create trucks, trips, and loads
+
+Use these mutations on the local GraphQL endpoint:
+
+- `createTruck(driverId: ID!, plateNumber: String!, capacityKg: Int!)` requires
+  a driver. It removes plate whitespace, uppercases the result, and accepts
+  plates up to 32 characters.
+- `createTrip(truckId: ID!, input: CreateTripInput!)` requires an existing truck.
+  The input contains `origin`, `destination`, `departureAt`, and `latestArrivalAt`.
+- `createLoad(shipperId: ID!, input: CreateLoadInput!)` requires a shipper.
+  The input contains `pickup`, `delivery`, `pickupWindowStart`,
+  `pickupWindowEnd`, and `weightKg`.
+
+Location inputs take `longitude` and `latitude` as separate numbers. Send times
+as ISO 8601 timestamps with a timezone. Capacity and weight use whole kilograms.
 
 ## Local data services
 
