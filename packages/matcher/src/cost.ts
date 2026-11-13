@@ -8,10 +8,7 @@ export function calculatePairCost(
   requireNonnegative(estimate.detourKm, "detourKm");
   requireNonnegative(estimate.delayMinutes, "delayMinutes");
   requireNonnegative(estimate.priceGapUzs, "priceGapUzs");
-  requireNonnegative(weights.detour, "detour weight");
-  requireNonnegative(weights.delay, "delay weight");
-  requireNonnegative(weights.priceGap, "price-gap weight");
-  requireNonnegative(weights.reliability, "reliability weight");
+  validateCostWeights(weights);
   if (
     !Number.isFinite(trip.reliability) ||
     trip.reliability < 0 ||
@@ -28,4 +25,11 @@ export function calculatePairCost(
   if (!Number.isFinite(cost))
     throw new RangeError("Pair cost exceeds the numeric range");
   return cost;
+}
+
+export function validateCostWeights(weights: CostWeights): void {
+  requireNonnegative(weights.detour, "detour weight");
+  requireNonnegative(weights.delay, "delay weight");
+  requireNonnegative(weights.priceGap, "price-gap weight");
+  requireNonnegative(weights.reliability, "reliability weight");
 }

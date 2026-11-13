@@ -14,6 +14,7 @@ export interface MatchLoad {
 }
 
 export interface PairEstimate {
+  readonly pickupDistanceKm?: number;
   readonly pickupAtMs: number;
   // Arrival at the truck's destination after delivering the load.
   readonly tripEndAtMs: number;

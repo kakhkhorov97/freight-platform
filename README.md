@@ -235,6 +235,26 @@ in minutes, absolute price gap in Uzbek soum, and `1 - reliability`. Reliability
 ranges from 0 to 1. A zero weight disables that term. The matcher accepts
 explicit inputs for these values and performs no routing or database calls.
 
+`firstComeFirstServed` scans candidates in the caller's supplied arrival order.
+`greedyNearest` chooses the shortest `pickupDistanceKm` first, with input order
+breaking ties. Supply road distance from the truck's starting point to the load
+pickup for this estimate. Existing feasibility and cost functions also accept
+estimates without pickup distance.
+
+`batchAssign` finds a maximum-cardinality one-to-one assignment, then minimizes
+its total weighted cost using successive shortest augmenting paths. Residual
+edges allow it to revise earlier pairings. Bellman-Ford handles the negative
+reverse costs. This is a prototype implementation with O(F × V × E) work,
+where F is the number of matches. Scheduling repeated batches belongs to the
+worker. This version assigns at most one load to each trip.
+
+All strategies filter infeasible pairs first and preserve caller data. Duplicate
+trip/load pairs and contradictory records for the same ID are rejected. Batch
+results follow candidate input order, and equal-cost choices are deterministic
+for the same input. Numeric overflow or an unstable floating-point residual
+path raises an error. Hand-made unit tests and exhaustive enumeration of all
+three-by-three candidate graphs check assignment correctness.
+
 Run `npm test --workspace @freight/matcher` for the isolated tests. The root
 build and test commands also cover the matcher workspace.
 

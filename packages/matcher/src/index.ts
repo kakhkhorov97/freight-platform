@@ -8,3 +8,5 @@ export type {
 } from "./types";
 export { calculatePairCost } from "./cost";
 export { filterFeasiblePairs, isFeasiblePair } from "./feasibility";
+export { firstComeFirstServed, greedyNearest } from "./baselines";
+export { batchAssign } from "./batch";
