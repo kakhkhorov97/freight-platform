@@ -1,0 +1,31 @@
+{
+  "name": "@freight/simulator",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build --workspace @freight/matcher && tsc -p tsconfig.json",
+    "test": "npm run build && jest --runInBand",
+    "simulate": "npm run build --silent && node dist/cli.js"
+  },
+  "dependencies": {
+    "@freight/matcher": "0.0.0"
+  },
+  "devDependencies": {
+    "jest": "30.5.2",
+    "@types/node": "24.19.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/test/**/*.test.cjs"
+    ],
+    "transform": {}
+  },
+  "engines": {
+    "node": ">=24.9.0 <25"
+  }
+}

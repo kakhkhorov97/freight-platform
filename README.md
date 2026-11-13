@@ -258,6 +258,36 @@ three-by-three candidate graphs check assignment correctness.
 Run `npm test --workspace @freight/matcher` for the isolated tests. The root
 build and test commands also cover the matcher workspace.
 
+## Synthetic simulation
+
+`packages/simulator` generates repeatable synthetic demand and runs FCFS,
+greedy nearest, and batch assignment through the shared matcher. Seed and
+configuration are included in the JSON report. Its default 100 km line corridor,
+50 km/h speed, prices, reliability values, and cost weights are illustrative
+inputs. They are not measured Uzbekistan road data or calibrated research results.
+The example schedule starts on 1 January 2030 UTC.
+
+```sh
+npm run --silent simulate -- --seed 42 --trips 20 --loads 30 --adoption 0.3 --detour 20
+```
+
+Counts range from 0 to 100. Adoption ranges from 0 to 1 and selects
+`floor(trips × adoption)` participating trucks. With the same seed and population
+sizes, changing adoption preserves all trips and loads and uses nested samples.
+FCFS scans load-window opening times, then trip departure times. This runner
+compares a single snapshot. Repeated rolling-horizon replay is a later step.
+
+Metrics require `baselineDistanceKm` for every trip and `loadedDistanceKm` for
+each assigned pair. Unmatched and nonparticipating trips travel their baseline
+route empty. A matched trip travels baseline distance plus detour, of which
+`loadedDistanceKm` is loaded. Empty-kilometre share divides all fleet empty
+kilometres by all fleet kilometres. Matched-load rate uses all posted loads.
+Average detour and wait use matched loads only. Wait starts when the pickup
+window opens. Empty denominators return zero.
+
+Run `npm test --workspace @freight/simulator` for generator, runner, and CLI
+checks. The root build and test commands include the simulator.
+
 ## Local data services
 
 Install and start [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/)
