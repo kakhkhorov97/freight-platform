@@ -351,6 +351,60 @@ recorded test results. Stop the services with `docker compose down`; named
 volumes retain data. Database environment settings initialize only an empty
 volume. Changing `.env` does not change an existing database user's password.
 
+## Optional road routing
+
+The API's `RoutingModule` exports an `OsrmClient` configured by `OSRM_BASE_URL`,
+defaulting to `http://127.0.0.1:5001`. It uses Node's HTTP client, a five-second
+timeout, coordinate validation, and a 1000 m snapping limit. Unreachable routes
+return `null`; outages and invalid responses throw. It never falls back to a
+straight-line estimate or contacts a public routing server.
+
+`estimatePairRoute` requests a baseline origin-to-destination route and a route
+through pickup and delivery. It converts metres to kilometres and seconds to
+whole milliseconds, includes waiting until the pickup window opens, and returns
+`baselineDistanceKm` plus the matcher's `PairEstimate`. The caller supplies the
+price gap. The matcher still checks capacity, pickup deadlines, final arrival,
+and detour limits. This adapter does not create or confirm matches.
+
+OSRM chooses the fastest route. A via route can have a shorter distance than the
+baseline, so negative detour and delay are clamped to zero. The shared metrics
+currently use baseline plus nonnegative detour as total distance. For a shorter
+via route, that convention overstates distance; revise the metrics before
+reporting road-based experimental results. The synthetic simulator is unchanged.
+The car profile supplies prototype travel estimates and does not enforce truck
+height, weight restrictions, border delays, loading time, or live traffic.
+
+The Docker service uses the upstream [OSRM MLD setup](https://github.com/Project-OSRM/osrm-backend#quick-start).
+Map preparation is a separate, manual operation and can require substantial disk
+space, memory, and time. It has not been run as part of the automated tests.
+From the project root, download the [Geofabrik Uzbekistan extract](https://download.geofabrik.de/asia/uzbekistan.html)
+and prepare it once:
+
+```sh
+mkdir -p data/osrm
+curl --fail --location --output data/osrm/uzbekistan-latest.osm.pbf https://download.geofabrik.de/asia/uzbekistan-latest.osm.pbf
+docker compose run --rm -v "$PWD/data/osrm:/data:rw" osrm osrm-extract -p /opt/car.lua /data/uzbekistan-latest.osm.pbf
+docker compose run --rm -v "$PWD/data/osrm:/data:rw" osrm osrm-partition /data/uzbekistan-latest.osrm
+docker compose run --rm -v "$PWD/data/osrm:/data:rw" osrm osrm-customize /data/uzbekistan-latest.osrm
+docker compose --profile routing up -d osrm
+```
+
+The map and graph files are ignored by Git. Rebuild all graph files when changing
+OSRM versions or map data. Record the extract timestamp, checksum, OSRM version,
+and profile when running research experiments. Map data is © OpenStreetMap
+contributors, available under the [ODbL](https://www.openstreetmap.org/copyright).
+
+Example smoke check using illustrative Tashkent and Samarkand coordinates:
+
+```sh
+curl --fail 'http://127.0.0.1:5001/route/v1/driving/69.2401,41.2995;66.9597,39.6542?overview=false'
+```
+
+Expect `code: "Ok"` and route legs, not a fixed distance. If changing `OSRM_PORT`,
+update `OSRM_BASE_URL` to match. `docker compose up -d --wait` starts only the data
+services; OSRM requires the `routing` profile or its service name. Tests use a
+local HTTP fixture and hand-made timings, so they need no downloaded maps.
+
 ## License
 
 Licensed under the [MIT License](LICENSE).

@@ -16,3 +16,6 @@ coverage/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Downloaded maps and generated routing graphs
+/data/osrm/

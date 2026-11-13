@@ -41,6 +41,15 @@ services:
       retries: 10
       start_period: 5s
 
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:v26.11.0
+    profiles: [routing]
+    command: [osrm-routed, --algorithm, mld, /data/uzbekistan-latest.osrm]
+    ports:
+      - "127.0.0.1:${OSRM_PORT:-5001}:5000"
+    volumes:
+      - ./data/osrm:/data:ro
+
 volumes:
   postgres_data:
   redis_data:

@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run build --workspace @freight/matcher && tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "test": "npm run build && node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand",
     "migration:create": "typeorm migration:create",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@apollo/server": "5.5.1",
     "@as-integrations/express5": "1.1.2",
+    "@freight/matcher": "0.0.0",
     "@nestjs/apollo": "14.2.0",
     "@nestjs/common": "12.4.0",
     "@nestjs/config": "12.1.1",
