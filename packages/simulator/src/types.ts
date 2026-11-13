@@ -43,13 +43,40 @@ export interface SimulationReport {
   readonly loadCount: number;
   readonly limits: FeasibilityLimits;
   readonly weights: CostWeights;
-  readonly results: readonly {
-    readonly strategy: "fcfs" | "greedy-nearest" | "batch";
-    readonly matches: readonly {
-      readonly tripId: string;
-      readonly loadId: string;
-      readonly cost: number;
-    }[];
-    readonly metrics: MatchMetrics;
+  readonly replay?: ReplayMetadata;
+  readonly results: readonly SimulationResult[];
+}
+
+export type MatchingStrategy = "fcfs" | "greedy-nearest" | "batch";
+
+export interface SimulationResult {
+  readonly strategy: MatchingStrategy;
+  readonly matches: readonly {
+    readonly tripId: string;
+    readonly loadId: string;
+    readonly cost: number;
+    readonly assignedAtMs?: number;
   }[];
+  readonly metrics: MatchMetrics;
+}
+
+export interface ReplayMetadata {
+  readonly batchIntervalMinutes: number;
+  readonly batchCount: number;
+  readonly startAtMs: number;
+  readonly endAtMs: number;
+}
+
+export interface SweepOptions {
+  readonly seeds: readonly number[];
+  readonly adoptionRates: readonly number[];
+  readonly demand?: Omit<DemandOptions, "seed" | "adoptionRate">;
+  readonly mode?: "snapshot" | "rolling";
+  readonly batchIntervalMinutes?: number;
+}
+
+export interface SweepReport {
+  readonly source: "synthetic";
+  readonly kind: "adoption-sweep";
+  readonly reports: readonly SimulationReport[];
 }

@@ -274,8 +274,9 @@ npm run --silent simulate -- --seed 42 --trips 20 --loads 30 --adoption 0.3 --de
 Counts range from 0 to 100. Adoption ranges from 0 to 1 and selects
 `floor(trips × adoption)` participating trucks. With the same seed and population
 sizes, changing adoption preserves all trips and loads and uses nested samples.
-FCFS scans load-window opening times, then trip departure times. This runner
-compares a single snapshot. Repeated rolling-horizon replay is a later step.
+FCFS scans load-window opening times, then trip departure times. The default
+single run compares a full-information snapshot. Use rolling replay to reveal
+trip and load availability over time.
 
 Metrics require `baselineDistanceKm` for every trip and `loadedDistanceKm` for
 each assigned pair. Unmatched and nonparticipating trips travel their baseline
@@ -287,6 +288,30 @@ window opens. Empty denominators return zero.
 
 Run `npm test --workspace @freight/simulator` for generator, runner, and CLI
 checks. The root build and test commands include the simulator.
+
+### Rolling replay and adoption sweeps
+
+```sh
+npm run --silent simulate -- --mode rolling --interval 15 --seed 42
+npm run --silent simulate -- --sweep --seeds 1,2,3 --rates 0.1,0.3,0.6 --format csv
+```
+
+Rolling replay interprets trip departure as earliest readiness. Trucks wait at
+their origin until selected. A load becomes known when its pickup window opens.
+All strategies run on the same batch clock, and pickup and final arrival times
+are recalculated from the decision time using the illustrative constant speed.
+Assignments reserve both the trip and the load, with immediate acceptance
+assumed for simulation. Each result records `assignedAtMs`. Replay supports
+whole-minute intervals from 1 to 60, with a default of 15 and a 10000-batch limit.
+
+A sweep defaults to rolling mode at 10%, 30%, and 60% adoption. The same seeded
+population is reused at each adoption level. Use `--mode snapshot` for snapshot
+sweeps. Seeds and rates must be unique, with at most 100 combinations.
+
+`--format csv` writes one row per seed, adoption level, and strategy. Rows include
+model settings, weights, limits, and metrics for reproducibility. The default
+format is JSON. Redirect standard output to save either format. These runs use
+synthetic assumptions and do not establish measured platform benefits.
 
 ## Local data services
 
