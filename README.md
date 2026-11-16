@@ -351,6 +351,42 @@ recorded test results. Stop the services with `docker compose down`; named
 volumes retain data. Database environment settings initialize only an empty
 volume. Changing `.env` does not change an existing database user's password.
 
+## Matching queue foundation
+
+The standalone worker uses BullMQ 6.7.6 and ioredis 6.0.0. It consumes `assign-snapshot-v1` jobs from
+`freight-matching-v1`. Each job contains candidate pairs, feasibility limits,
+and cost weights. The worker validates the payload, calls the same `batchAssign`
+function used by the simulator, and returns proposed trip/load IDs in its job
+result. Jobs support up to 1000 candidate pairs, 50 trips, and 50 loads.
+
+```sh
+docker compose up -d --wait redis
+npm run worker:matching
+```
+
+Redis defaults to `127.0.0.1:6379`. The worker reads `REDIS_HOST` and `REDIS_PORT`
+from root `.env`, with shell settings taking precedence. Stop with Ctrl+C; the
+worker finishes its current job and closes its Redis connections. API startup
+and ordinary unit tests do not require Redis.
+
+Internal producers use `createMatchingQueue(connection, onError)` and
+`enqueueMatchingJob(queue, payload)` from
+`apps/api/src/matching/matching-queue.ts`, then close the queue on shutdown.
+The worker runs one job at a time per process. Completed results retain at most
+100 jobs for up to one day, and failed jobs at most 100 for up to seven days;
+BullMQ prunes these lazily as subsequent jobs finish. Invalid jobs fail without
+retry. Avoid putting credentials or personal details in job data.
+
+This batch processes supplied snapshots. Reading open database records, periodic
+scheduling, and saving proposals belong to the following integration steps.
+A queue result does not reserve a trip/load or confirm a match. Multiple worker
+processes may run in parallel; concurrency is not a database reservation lock.
+
+Run `npm test` for payload and processor tests. Run `npm run test:queue` with
+Redis running for a real enqueue/process/result check and rejection check.
+The integration tests use a unique temporary queue and delete only their queue.
+Fixture trips, loads, weights, and timings are hand-made examples.
+
 ## Optional road routing
 
 The API's `RoutingModule` exports an `OsrmClient` configured by `OSRM_BASE_URL`,

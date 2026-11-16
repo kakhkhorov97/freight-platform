@@ -28,7 +28,9 @@
     "migration:revert": "npm run migration:revert --workspace @freight/api --",
     "test:database": "npm run test:database --workspace @freight/api",
     "simulate": "npm run simulate --workspace @freight/simulator --",
-    "routing:check": "npm run build --workspace @freight/api && node apps/api/scripts/check-routing.cjs"
+    "routing:check": "npm run build --workspace @freight/api && node apps/api/scripts/check-routing.cjs",
+    "worker:matching": "npm run build --workspace @freight/api && node apps/api/dist/matching/main.js",
+    "test:queue": "npm run test:queue --workspace @freight/api"
   },
   "engines": {
     "node": ">=24.9.0 <25"
