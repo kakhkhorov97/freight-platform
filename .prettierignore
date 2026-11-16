@@ -1,2 +1,5 @@
 # npm manages the generated dependency lockfile.
 package-lock.json
+
+# Downloaded maps, generated graphs, and local routing reports.
+data/osrm/

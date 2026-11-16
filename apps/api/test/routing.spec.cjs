@@ -1,4 +1,8 @@
 const { beforeAll, afterAll, test, expect } = require("@jest/globals");
+const { execFile } = require("node:child_process");
+const { dirname, resolve } = require("node:path");
+const process = require("node:process");
+const { promisify } = require("node:util");
 const { createServer } = require("node:http");
 const { URL } = require("node:url");
 const { OsrmClient } = require("../dist/routing/osrm-client");
@@ -18,7 +22,9 @@ beforeAll(async () => {
     requested = new URL(req.url, "http://localhost");
     if (hanging) return;
     res.writeHead(status, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(reply));
+    res.end(
+      JSON.stringify(typeof reply === "function" ? reply(requested) : reply),
+    );
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   client = new OsrmClient(`http://127.0.0.1:${server.address().port}`, 500);
@@ -250,4 +256,51 @@ test("rejects invalid inputs and timestamp overflow", async () => {
       estimatePairRoute(routerWith(), { ...input, ...changes }),
     ).rejects.toThrow();
   }
+});
+
+function runLiveCheck() {
+  const script = resolve(
+    dirname(require.resolve("../package.json")),
+    "scripts/check-routing.cjs",
+  );
+  return promisify(execFile)(process.execPath, [script], {
+    env: {
+      ...process.env,
+      OSRM_BASE_URL: `http://127.0.0.1:${server.address().port}`,
+    },
+    timeout: 3000,
+  });
+}
+
+test("routing check prints both directions using the configured local server", async () => {
+  status = 200;
+  reply = (url) => ({
+    code: "Ok",
+    routes: [
+      {
+        legs: Array.from({ length: url.pathname.split(";").length - 1 }, () =>
+          leg(1000, 60),
+        ),
+      },
+    ],
+  });
+  const { stdout, stderr } = await runLiveCheck();
+  expect(stderr).toBe("");
+  const report = JSON.parse(stdout);
+  expect(Number.isFinite(Date.parse(report.checkedAt))).toBe(true);
+  expect(report.results.map(({ from, to }) => [from, to])).toEqual([
+    ["tashkent", "samarkand"],
+    ["samarkand", "tashkent"],
+  ]);
+  expect(report.results[0].pair.estimate.loadedDistanceKm).toBe(1);
+});
+
+test("routing check fails without printing a success report for an unreachable route", async () => {
+  status = 400;
+  reply = { code: "NoRoute" };
+  await expect(runLiveCheck()).rejects.toMatchObject({
+    code: 1,
+    stdout: "",
+    stderr: expect.stringContaining("Routing check failed"),
+  });
 });

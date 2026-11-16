@@ -42,13 +42,19 @@ services:
       start_period: 5s
 
   osrm:
-    image: ghcr.io/project-osrm/osrm-backend:v26.11.0
+    image: &osrm-image ghcr.io/project-osrm/osrm-backend:v26.11.0-debian
     profiles: [routing]
     command: [osrm-routed, --algorithm, mld, /data/uzbekistan-latest.osrm]
     ports:
       - "127.0.0.1:${OSRM_PORT:-5001}:5000"
     volumes:
       - ./data/osrm:/data:ro
+
+  osrm-prepare:
+    image: *osrm-image
+    profiles: [routing-setup]
+    volumes:
+      - ./data/osrm:/data:rw
 
 volumes:
   postgres_data:

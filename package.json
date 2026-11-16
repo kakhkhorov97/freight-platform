@@ -27,7 +27,8 @@
     "migration:run": "npm run migration:run --workspace @freight/api --",
     "migration:revert": "npm run migration:revert --workspace @freight/api --",
     "test:database": "npm run test:database --workspace @freight/api",
-    "simulate": "npm run simulate --workspace @freight/simulator --"
+    "simulate": "npm run simulate --workspace @freight/simulator --",
+    "routing:check": "npm run build --workspace @freight/api && node apps/api/scripts/check-routing.cjs"
   },
   "engines": {
     "node": ">=24.9.0 <25"

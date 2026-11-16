@@ -375,20 +375,23 @@ The car profile supplies prototype travel estimates and does not enforce truck
 height, weight restrictions, border delays, loading time, or live traffic.
 
 The Docker service uses the upstream [OSRM MLD setup](https://github.com/Project-OSRM/osrm-backend#quick-start).
-Map preparation is a separate, manual operation and can require substantial disk
-space, memory, and time. It has not been run as part of the automated tests.
+Map preparation is a separate operation and can require substantial disk space,
+memory, and time. Automated unit tests use fixtures; run the live check below
+after preparing the graph.
 From the project root, download the [Geofabrik Uzbekistan extract](https://download.geofabrik.de/asia/uzbekistan.html)
 and prepare it once:
 
 ```sh
 mkdir -p data/osrm
 curl --fail --location --output data/osrm/uzbekistan-latest.osm.pbf https://download.geofabrik.de/asia/uzbekistan-latest.osm.pbf
-docker compose run --rm -v "$PWD/data/osrm:/data:rw" osrm osrm-extract -p /opt/car.lua /data/uzbekistan-latest.osm.pbf
-docker compose run --rm -v "$PWD/data/osrm:/data:rw" osrm osrm-partition /data/uzbekistan-latest.osrm
-docker compose run --rm -v "$PWD/data/osrm:/data:rw" osrm osrm-customize /data/uzbekistan-latest.osrm
+docker compose run --rm osrm-prepare osrm-extract --threads 2 -p /opt/car.lua /data/uzbekistan-latest.osm.pbf
+docker compose run --rm osrm-prepare osrm-partition --threads 2 /data/uzbekistan-latest.osrm
+docker compose run --rm osrm-prepare osrm-customize --threads 2 /data/uzbekistan-latest.osrm
 docker compose --profile routing up -d osrm
 ```
 
+The `osrm-prepare` service can write graph files; the running routing service
+mounts those files read-only. Both use the same pinned image.
 The map and graph files are ignored by Git. Rebuild all graph files when changing
 OSRM versions or map data. Record the extract timestamp, checksum, OSRM version,
 and profile when running research experiments. Map data is © OpenStreetMap
@@ -400,10 +403,40 @@ Example smoke check using illustrative Tashkent and Samarkand coordinates:
 curl --fail 'http://127.0.0.1:5001/route/v1/driving/69.2401,41.2995;66.9597,39.6542?overview=false'
 ```
 
+For a repeatable check through the API client and pair estimator in both corridor
+directions, run:
+
+```sh
+npm run routing:check
+```
+
+The command builds the API, reads `OSRM_BASE_URL` from the environment or root
+`.env`, and exits with an error if routing fails. Its JSON output includes road
+distances, travel times, pair estimates, and the check timestamp. Locations,
+1 January 2030 schedule, and zero price gap are example inputs. Pickup and delivery
+use the trip endpoints to check the adapter's three legs. This is a connectivity
+check, not an experiment or a measure of matching benefits.
+
 Expect `code: "Ok"` and route legs, not a fixed distance. If changing `OSRM_PORT`,
 update `OSRM_BASE_URL` to match. `docker compose up -d --wait` starts only the data
 services; OSRM requires the `routing` profile or its service name. Tests use a
 local HTTP fixture and hand-made timings, so they need no downloaded maps.
+
+### Local routing verification
+
+On 16 November 2026, extraction, partitioning, customization, and the live check
+completed with the arm64 `v26.11.0-debian` image and `/opt/car.lua` profile.
+The downloaded PBF was 125786100 bytes, with SHA-256
+`073f166bb2542e2b7c64354fd7573a48d350b72756f68096b1c525cf8a7885fe`.
+The image digest was
+`sha256:e1929ae2818226284d7ef007329098a30851c11528ab3712bc9c8d68da78278b`.
+
+For the example coordinates above, OSRM returned 327.7988 km from Tashkent to
+Samarkand and 327.6871 km in reverse. These are car-profile routing estimates,
+not measured trips or simulation results. Both pair-estimator checks succeeded.
+The local `data/osrm/preparation.json` and `data/osrm/smoke-check.json` record
+preparation settings and the check output. These generated files remain ignored
+by Git. A later extract or profile may produce different routes.
 
 ## License
 
