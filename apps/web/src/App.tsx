@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthPanel } from "./AuthPanel";
 import { errorMessage, isUnauthenticated } from "./graphql";
 import { clearSession, loadSession, logout } from "./session";
@@ -47,6 +47,13 @@ export function App() {
   const [signingOut, setSigningOut] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
+  // Called when any request reports an expired or revoked session.
+  const handleSessionEnded = useCallback(() => {
+    clearSession();
+    setAuthNotice("Your session has ended. Please sign in again.");
+    setSession(null);
+  }, []);
+
   // Load the signed-in user's name and role whenever the session changes.
   useEffect(() => {
     if (!session) return;
@@ -59,9 +66,7 @@ export function App() {
       .catch((error: unknown) => {
         if (!active) return;
         if (isUnauthenticated(error)) {
-          clearSession();
-          setAuthNotice("Your session has ended. Please sign in again.");
-          setSession(null);
+          handleSessionEnded();
         } else {
           setProfile({ state: "error", message: errorMessage(error) });
         }
@@ -69,7 +74,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [session, attempt]);
+  }, [session, attempt, handleSessionEnded]);
 
   function handleSignedIn(next: Session) {
     setAuthNotice(null);
@@ -107,8 +112,10 @@ export function App() {
       ) : profile.state === "ready" ? (
         <Workspace
           user={profile.user}
+          token={session.token}
           signingOut={signingOut}
           onSignOut={handleSignOut}
+          onSessionEnded={handleSessionEnded}
         />
       ) : profile.state === "loading" ? (
         <main className="content">

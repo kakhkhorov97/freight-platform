@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TrucksPage } from "./TrucksPage";
 import type { CurrentUser, UserRole } from "./user";
 
 interface PageDef {
@@ -86,12 +87,16 @@ function useHashPage(available: PageDef[]): PageDef {
 
 export function Workspace({
   user,
+  token,
   signingOut,
   onSignOut,
+  onSessionEnded,
 }: {
   user: CurrentUser;
+  token: string;
   signingOut: boolean;
   onSignOut: () => void;
+  onSessionEnded: () => void;
 }) {
   const available = pages[user.role];
   const current = useHashPage(available);
@@ -128,11 +133,17 @@ export function Workspace({
       </nav>
 
       <section className="panel" aria-labelledby="page-title">
-        <h1 id="page-title">{current.title}</h1>
-        <p className="muted">{current.summary}</p>
-        <div className="empty">
-          <p>This screen is not built yet.</p>
-        </div>
+        {user.role === "Driver" && current.id === "trucks" ? (
+          <TrucksPage token={token} onSessionEnded={onSessionEnded} />
+        ) : (
+          <>
+            <h1 id="page-title">{current.title}</h1>
+            <p className="muted">{current.summary}</p>
+            <div className="empty">
+              <p>This screen is not built yet.</p>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );

@@ -482,8 +482,12 @@ account creation, sign-in, and sign-out against the existing GraphQL API.
 After sign-in, it loads `me` and shows navigation for the user's role:
 trucks, trips, and matches for drivers; loads and matches for shippers; users
 and matches for administrators. The selected page is kept in the URL hash.
-These pages are placeholders; their screens are not implemented yet. A revoked
-or expired session returns the user to sign-in.
+A revoked or expired session returns the user to sign-in.
+
+Drivers can list and add trucks on **My trucks**. The form previews the plate
+as the API stores it, without spaces and uppercased, and the API rejects a
+duplicate plate. Trucks are shown newest first with capacity in kilograms and
+the date added. The remaining pages are placeholders.
 
 Start PostgreSQL and the API first, then run from the project root:
 
