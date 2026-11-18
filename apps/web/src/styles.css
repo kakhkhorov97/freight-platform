@@ -1,0 +1,245 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f5f6f4;
+  --surface: #ffffff;
+  --text: #1c1f1d;
+  --muted: #5d6560;
+  --border: #d9ddd9;
+  --accent: #1f6f4a;
+  --accent-text: #ffffff;
+  --ok: #1f8a4c;
+  --bad: #c0392b;
+  --wait: #b7791f;
+  --error-bg: #fdecea;
+  --notice-bg: #e8f4ec;
+  --radius: 10px;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141715;
+    --surface: #1d211f;
+    --text: #e8ebe9;
+    --muted: #9aa39e;
+    --border: #333a36;
+    --accent: #3fae78;
+    --accent-text: #0d1a13;
+    --error-bg: #3a1f1c;
+    --notice-bg: #1c3226;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wait);
+}
+
+.status--up .status__dot {
+  background: var(--ok);
+}
+
+.status--down .status__dot {
+  background: var(--bad);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 48px 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card h1 {
+  margin: 0 0 8px;
+  font-size: 1.375rem;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.field input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.field input:focus-visible,
+.button:focus-visible,
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.roles legend {
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.role {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.role:has(input:checked) {
+  border-color: var(--accent);
+}
+
+.role span {
+  display: flex;
+  flex-direction: column;
+}
+
+.role small {
+  color: var(--muted);
+}
+
+.button {
+  padding: 11px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error,
+.notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.error {
+  background: var(--error-bg);
+  color: var(--bad);
+}
+
+.notice {
+  background: var(--notice-bg);
+}

@@ -474,6 +474,28 @@ The local `data/osrm/preparation.json` and `data/osrm/smoke-check.json` record
 preparation settings and the check output. These generated files remain ignored
 by Git. A later extract or profile may produce different routes.
 
+## Web client
+
+`apps/web` is a React 19 and TypeScript client built with Vite. This first step
+covers account creation, sign-in, and sign-out against the existing GraphQL API.
+Trucks, trips, loads, and matches screens are not implemented yet.
+
+Start PostgreSQL and the API first, then run from the project root:
+
+```sh
+npm run start:api
+npm run dev --workspace @freight/web
+```
+
+Open `http://127.0.0.1:5173`. The Vite dev server forwards `/graphql` and
+`/health` to the API at `API_HOST` and `API_PORT` from the root `.env`, so the
+API needs no CORS configuration. The header shows whether `/health` responds.
+
+The session token is kept in the browser's `localStorage` until it expires or
+the user signs out. Times are shown in Asia/Tashkent time. Only `WEB_`-prefixed
+environment variables are exposed to browser code; none are used yet.
+`npm run build` type-checks and bundles the client into `apps/web/dist`.
+
 ## License
 
 Licensed under the [MIT License](LICENSE).
