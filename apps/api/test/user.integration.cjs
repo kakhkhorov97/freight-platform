@@ -306,6 +306,18 @@ test("GraphQL enforces authentication, ownership, and input validation", async (
     expect(
       (await query(lookup, { id: user.id }, driver.token)).errors[0].message,
     ).toMatch(/own user profile/);
+    const me = "{ me { id displayName role } }";
+    expect(await query(me, {}, driver.token)).toEqual({
+      data: {
+        me: { id: driver.id, displayName: "New driver", role: "Driver" },
+      },
+    });
+    expect(await query(me, {}, user.token)).toEqual({
+      data: {
+        me: { id: user.id, displayName: "New shipper", role: "Shipper" },
+      },
+    });
+    expect((await query(me)).errors[0].message).toMatch(/valid session/);
     expect(
       (await query("{ users { id } }", {}, driver.token)).errors[0].message,
     ).toMatch(/admin role/);
@@ -515,6 +527,9 @@ test("GraphQL enforces authentication, ownership, and input validation", async (
     expect(
       (await query("{ trips { id } }", {}, driver.token)).errors[0].message,
     ).toMatch(/valid session/);
+    expect((await query(me, {}, driver.token)).errors[0].message).toMatch(
+      /valid session/,
+    );
     await source
       .getRepository(AuthSession)
       .update({ userId: user.id }, { expiresAt: new Date(0) });

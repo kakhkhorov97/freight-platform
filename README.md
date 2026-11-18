@@ -198,7 +198,8 @@ registration or login attempts per IP address per minute, per process.
 
 Existing user rows retain their records and need explicit credential setup.
 Administrators can list users and inspect any profile. Other users can read
-their own profile. Truck reads are scoped to the owner or an administrator.
+their own profile. Any signed-in user can call `me { id displayName role }` to
+read the account that owns the current session. Truck reads are scoped to the owner or an administrator.
 Trip and Load reads are available to authenticated users. Match reads are scoped
 to the assigned driver, shipper, or an administrator.
 
@@ -476,9 +477,13 @@ by Git. A later extract or profile may produce different routes.
 
 ## Web client
 
-`apps/web` is a React 19 and TypeScript client built with Vite. This first step
-covers account creation, sign-in, and sign-out against the existing GraphQL API.
-Trucks, trips, loads, and matches screens are not implemented yet.
+`apps/web` is a React 19 and TypeScript client built with Vite. It covers
+account creation, sign-in, and sign-out against the existing GraphQL API.
+After sign-in, it loads `me` and shows navigation for the user's role:
+trucks, trips, and matches for drivers; loads and matches for shippers; users
+and matches for administrators. The selected page is kept in the URL hash.
+These pages are placeholders; their screens are not implemented yet. A revoked
+or expired session returns the user to sign-in.
 
 Start PostgreSQL and the API first, then run from the project root:
 

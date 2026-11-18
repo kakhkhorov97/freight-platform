@@ -1,4 +1,8 @@
-import { ForbiddenException, ParseUUIDPipe } from "@nestjs/common";
+import {
+  ForbiddenException,
+  ParseUUIDPipe,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { Args, ID, Query, Resolver } from "@nestjs/graphql";
 import { CurrentUser, requireRole } from "../auth/auth.context";
 import type { Principal } from "../auth/auth.service";
@@ -19,6 +23,15 @@ export class UsersResolver {
     requireRole(principal, UserRole.Admin);
     validatePagination(page);
     return this.usersService.list(page.limit, page.offset);
+  }
+
+  @Query(() => UserModel, {
+    description: "The user who owns the current session.",
+  })
+  async me(@CurrentUser() principal: Principal): Promise<UserModel> {
+    const user = await this.usersService.findById(principal.id);
+    if (!user) throw new UnauthorizedException("A valid session is required");
+    return user;
   }
 
   @Query(() => UserModel, { nullable: true })
