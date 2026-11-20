@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TripsPage } from "./TripsPage";
 import { TrucksPage } from "./TrucksPage";
 import type { CurrentUser, UserRole } from "./user";
 
@@ -135,6 +136,8 @@ export function Workspace({
       <section className="panel" aria-labelledby="page-title">
         {user.role === "Driver" && current.id === "trucks" ? (
           <TrucksPage token={token} onSessionEnded={onSessionEnded} />
+        ) : user.role === "Driver" && current.id === "trips" ? (
+          <TripsPage token={token} onSessionEnded={onSessionEnded} />
         ) : (
           <>
             <h1 id="page-title">{current.title}</h1>

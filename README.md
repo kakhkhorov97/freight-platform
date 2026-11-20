@@ -487,7 +487,15 @@ A revoked or expired session returns the user to sign-in.
 Drivers can list and add trucks on **My trucks**. The form previews the plate
 as the API stores it, without spaces and uppercased, and the API rejects a
 duplicate plate. Trucks are shown newest first with capacity in kilograms and
-the date added. The remaining pages are placeholders.
+the date added.
+
+Drivers can list and post return trips on **My trips**. The form picks one of
+the driver's trucks and an origin and destination from approximate city centres
+on the corridor: Tashkent, Gulistan, Jizzakh, and Samarkand. Departure and
+latest arrival are entered in Tashkent time (UTC+5) and sent with that offset.
+Trips are shown soonest departure first. The API's `trips` query returns all
+trips, so the client filters them to the driver's own trucks. The remaining
+pages are placeholders.
 
 Start PostgreSQL and the API first, then run from the project root:
 

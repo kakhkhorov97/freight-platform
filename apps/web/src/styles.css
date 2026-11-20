@@ -156,7 +156,8 @@ body {
   font-weight: 600;
 }
 
-.field input {
+.field input,
+.field select {
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -167,6 +168,7 @@ body {
 }
 
 .field input:focus-visible,
+.field select:focus-visible,
 .button:focus-visible,
 .tab:focus-visible {
   outline: 2px solid var(--accent);
