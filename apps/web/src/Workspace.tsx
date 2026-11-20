@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LoadsPage } from "./LoadsPage";
 import { TripsPage } from "./TripsPage";
 import { TrucksPage } from "./TrucksPage";
 import type { CurrentUser, UserRole } from "./user";
@@ -138,6 +139,12 @@ export function Workspace({
           <TrucksPage token={token} onSessionEnded={onSessionEnded} />
         ) : user.role === "Driver" && current.id === "trips" ? (
           <TripsPage token={token} onSessionEnded={onSessionEnded} />
+        ) : user.role === "Shipper" && current.id === "loads" ? (
+          <LoadsPage
+            token={token}
+            userId={user.id}
+            onSessionEnded={onSessionEnded}
+          />
         ) : (
           <>
             <h1 id="page-title">{current.title}</h1>

@@ -2,13 +2,8 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { formatDateTime, formatKg } from "./format";
 import { errorMessage, isUnauthenticated } from "./graphql";
-import {
-  corridorPlaces,
-  createTrip,
-  listTripsForTrucks,
-  placeName,
-  tashkentLocalToIso,
-} from "./trips";
+import { corridorPlaces, placeName, tashkentLocalToIso } from "./places";
+import { createTrip, listTripsForTrucks } from "./trips";
 import type { Trip } from "./trips";
 import { listTrucks } from "./trucks";
 import type { Truck } from "./trucks";
